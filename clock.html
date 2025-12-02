@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wall Clock with Alarm</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+min-height: 100vh;
+display: flex;
+justify-content: center;
+align-items: center;
+padding: 20px;
+overflow: hidden;
+}
+
+.wall-clock-container {
+position: relative;
+width: 450px;
+height: 450px;
+}
+
+.clock-face {
+position: relative;
+width: 100%;
+height: 100%;
+background: radial-gradient(circle, #ffffff 0%, #f0f0f0 100%);
+border-radius: 50%;
+box-shadow:
+0 0 60px rgba(0, 0, 0, 0.3),
+inset 0 0 30px rgba(0, 0, 0, 0.1),
+0 0 0 20px #2c3e50,
+0 0 0 22px #34495e;
+display: flex;
+justify-content: center;
+align-items: center;
+}
+
+.clock-face::before {
+content: '';
+position: absolute;
+width: 20px;
+height: 20px;
+background: #e74c3c;
+border-radius: 50%;
+z-index: 10;
+box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+}
+
+.number {
+position: absolute;
+width: 100%;
+height: 100%;
+text-align: center;
+font-size: 1.8rem;
+font-weight: 700;
+color: #2c3e50;
+}
+
+.number span {
+display: inline-block;
+position: absolute;
+left: 50%;
+transform-origin: 0 225px;
+}
+
+.tick {
+position: absolute;
+width: 2px;
+height: 15px;
+background: #7f8c8d;
+left: 50%;
+transform-origin: center 225px;
+}
+
+.tick.major {
+width: 4px;
+height: 25px;
+background: #34495e;
+}
+
+.hand {
+position: absolute;
+bottom: 50%;
+left: 50%;
+transform-origin: bottom center;
+border-radius: 50px;
+transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.hour-hand {
+width: 8px;
+height: 120px;
+background: linear-gradient(to top, #2c3e50, #34495e);
+margin-left: -4px;
+z-index: 3;
+}
+
+.minute-hand {
+width: 6px;
+height: 160px;
+background: linear-gradient(to top, #34495e, #7f8c8d);
+margin-left: -3px;
+z-index: 4;
+}
+
+.second-hand {
+width: 3px;
+height: 180px;
+background: #e74c3c;
+margin-left: -1.5px;
+z-index: 5;
+}
+
+.digital-display {
+position: absolute;
+top: 65%;
+left: 50%;
+transform: translateX(-50%);
+background: rgba(44, 62, 80, 0.9);
+padding: 12px 30px;
+border-radius: 25px;
+box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.digital-time {
+font-size: 1.5rem;
+font-weight: 600;
+color: #ecf0f1;
+letter-spacing: 2px;
+font-variant-numeric: tabular-nums;
+}
+
+.date-display {
+position: absolute;
+bottom: -80px;
+left: 50%;
+transform: translateX(-50%);
+text-align: center;
+color: #ecf0f1;
+font-size: 1.1rem;
+white-space: nowrap;
+text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.alarm-controls {
+position: absolute;
+bottom: -180px;
+left: 50%;
+transform: translateX(-50%);
+display: flex;
+gap: 10px;
+align-items: center;
+}
+
+.alarm-controls input {
+padding: 12px 20px;
+border: 2px solid #3498db;
+border-radius: 25px;
+background: rgba(255, 255, 255, 0.95);
+font-size: 1rem;
+outline: none;
+color: #2c3e50;
+font-weight: 600;
+}
+
+.alarm-controls button {
+padding: 12px 24px;
+background: linear-gradient(135deg, #3498db, #2980b9);
+color: white;
+border: none;
+border-radius: 25px;
+font-size: 1rem;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.3s;
+box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+}
+
+.alarm-controls button:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 20px rgba(52, 152, 219, 0.6);
+}
+
+.alarm-indicator {
+position: absolute;
+top: 15%;
+left: 50%;
+transform: translateX(-50%);
+background: rgba(231, 76, 60, 0.9);
+padding: 8px 20px;
+border-radius: 20px;
+color: white;
+font-weight: 600;
+display: none;
+animation: pulse 2s infinite;
+}
+
+.alarm-indicator.active {
+display: block;
+}
+
+@keyframes pulse {
+0%, 100% {
+opacity: 1;
+}
+50% {
+opacity: 0.6;
+}
+}
+
+.alarm-list-panel {
+position: absolute;
+top: 50%;
+left: -280px;
+transform: translateY(-50%);
+background: rgba(255, 255, 255, 0.95);
+padding: 20px;
+border-radius: 15px;
+width: 250px;
+box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.alarm-list-panel h3 {
+color: #2c3e50;
+margin-bottom: 15px;
+font-size: 1.2rem;
+}
+
+.alarm-item {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 10px;
+background: #ecf0f1;
+border-radius: 8px;
+margin-bottom: 8px;
+}
+
+.alarm-time {
+font-weight: 600;
+color: #2c3e50;
+}
+
+.delete-btn {
+padding: 5px 12px;
+background: #e74c3c;
+color: white;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+font-size: 0.85rem;
+transition: background 0.3s;
+}
+
+.delete-btn:hover {
+background: #c0392b;
+}
+
+.no-alarms {
+text-align: center;
+color: #7f8c8d;
+font-style: italic;
+padding: 20px 0;
+}
+
+.alarm-modal {
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0, 0, 0, 0.8);
+justify-content: center;
+align-items: center;
+z-index: 1000;
+backdrop-filter: blur(5px);
+}
+
+.alarm-modal.active {
+display: flex;
+}
+
+.modal-content {
+background: white;
+padding: 50px;
+border-radius: 25px;
+text-align: center;
+animation: ringBell 0.5s ease-in-out infinite;
+box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes ringBell {
+0%, 100% {
+transform: rotate(-5deg);
+}
+50% {
+transform: rotate(5deg);
+}
+}
+
+.modal-content h2 {
+font-size: 3rem;
+margin-bottom: 20px;
+color: #e74c3c;
+}
+
+.modal-content p {
+font-size: 2rem;
+margin-bottom: 30px;
+color: #2c3e50;
+font-weight: 600;
+}
+
+.stop-btn {
+padding: 15px 50px;
+background: linear-gradient(135deg, #e74c3c, #c0392b);
+color: white;
+border: none;
+border-radius: 30px;
+font-size: 1.2rem;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.3s;
+box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+}
+
+.stop-btn:hover {
+transform: scale(1.05);
+box-shadow: 0 7px 25px rgba(231, 76, 60, 0.6);
+}
+
+@media (max-width: 768px) {
+.wall-clock-container {
+width: 350px;
+height: 350px;
+}
+
+.alarm-list-panel {
+left: 50%;
+top: auto;
+bottom: -350px;
+transform: translateX(-50%);
+}
+
+.alarm-controls {
+flex-direction: column;
+bottom: -280px;
+}
+}
+</style>
+</head>
+<body>
+<div class="wall-clock-container">
+<div class="clock-face" id="clockFace">
+<div class="alarm-indicator" id="alarmIndicator">🔔 Alarm Set</div>
+
+<div class="hand hour-hand" id="hourHand"></div>
+<div class="hand minute-hand" id="minuteHand"></div>
+<div class="hand second-hand" id="secondHand"></div>
+
+<div class="digital-display">
+<div class="digital-time" id="digitalTime">00:00:00</div>
+</div>
+</div>
+
+<div class="date-display" id="dateDisplay"></div>
+
+<div class="alarm-controls">
+<input type="time" id="alarmTime" placeholder="Set Alarm">
+<button onclick="addAlarm()">Set Alarm</button>
+</div>
+
+<div class="alarm-list-panel">
+<h3>Active Alarms</h3>
+<div id="alarmList">
+<div class="no-alarms">No alarms set</div>
+</div>
+</div>
+</div>
+
+<div class="alarm-modal" id="alarmModal">
+<div class="modal-content">
+<h2>⏰</h2>
+<p id="alarmText">ALARM!</p>
+<button class="stop-btn" onclick="stopAlarm()">Stop Alarm</button>
+</div>
+</div>
+
+<script>
+let alarms = [];
+let alarmSound = null;
+
+function initAlarmSound() {
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+const oscillator = audioContext.createOscillator();
+const gainNode = audioContext.createGain();
+
+oscillator.connect(gainNode);
+gainNode.connect(audioContext.destination);
+
+oscillator.frequency.value = 800;
+oscillator.type = 'sine';
+gainNode.gain.value = 0.3;
+
+return { audioContext, oscillator, gainNode };
+}
+
+function createClockMarkers() {
+const clockFace = document.getElementById('clockFace');
+
+for (let i = 0; i < 60; i++) {
+const tick = document.createElement('div');
+tick.className = i % 5 === 0 ? 'tick major' : 'tick';
+tick.style.transform = `rotate(${i * 6}deg) translateY(-210px)`;
+clockFace.appendChild(tick);
+}
+
+for (let i = 1; i <= 12; i++) {
+const number = document.createElement('div');
+number.className = 'number';
+const span = document.createElement('span');
+span.textContent = i;
+const angle = (i * 30 - 90) * (Math.PI / 180);
+const radius = 175;
+const x = radius * Math.cos(angle);
+const y = radius * Math.sin(angle);
+span.style.left = `calc(50% + ${x}px)`;
+span.style.top = `calc(50% + ${y}px)`;
+span.style.transform = 'translate(-50%, -50%)';
+number.appendChild(span);
+clockFace.appendChild(number);
+}
+}
+
+function updateClock() {
+const now = new Date();
+
+const hours = now.getHours() % 12;
+const minutes = now.getMinutes();
+const seconds = now.getSeconds();
+
+const hourDeg = (hours * 30) + (minutes * 0.5);
+const minuteDeg = (minutes * 6) + (seconds * 0.1);
+const secondDeg = seconds * 6;
+
+document.getElementById('hourHand').style.transform = `rotate(${hourDeg}deg)`;
+document.getElementById('minuteHand').style.transform = `rotate(${minuteDeg}deg)`;
+document.getElementById('secondHand').style.transform = `rotate(${secondDeg}deg)`;
+
+const h = String(now.getHours()).padStart(2, '0');
+const m = String(minutes).padStart(2, '0');
+const s = String(seconds).padStart(2, '0');
+document.getElementById('digitalTime').textContent = `${h}:${m}:${s}`;
+
+const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-US', options);
+
+checkAlarms(h, m);
+}
+
+function addAlarm() {
+const alarmInput = document.getElementById('alarmTime');
+const alarmTime = alarmInput.value;
+
+if (!alarmTime) {
+alert('Please select a time for the alarm');
+return;
+}
+
+if (alarms.includes(alarmTime)) {
+alert('This alarm already exists');
+return;
+}
+
+alarms.push(alarmTime);
+alarmInput.value = '';
+renderAlarms();
+updateAlarmIndicator();
+}
+
+function renderAlarms() {
+const alarmList = document.getElementById('alarmList');
+
+if (alarms.length === 0) {
+alarmList.innerHTML = '<div class="no-alarms">No alarms set</div>';
+return;
+}
+
+alarmList.innerHTML = alarms.map((alarm, index) => `
+<div class="alarm-item">
+<span class="alarm-time">${alarm}</span>
+<button class="delete-btn" onclick="deleteAlarm(${index})">✕</button>
+</div>
+`).join('');
+}
+
+function deleteAlarm(index) {
+alarms.splice(index, 1);
+renderAlarms();
+updateAlarmIndicator();
+}
+
+function updateAlarmIndicator() {
+const indicator = document.getElementById('alarmIndicator');
+if (alarms.length > 0) {
+indicator.classList.add('active');
+} else {
+indicator.classList.remove('active');
+}
+}
+
+function checkAlarms(hours, minutes) {
+const currentTime = `${hours}:${minutes}`;
+
+if (alarms.includes(currentTime)) {
+triggerAlarm(currentTime);
+deleteAlarm(alarms.indexOf(currentTime));
+}
+}
+
+function triggerAlarm(time) {
+const modal = document.getElementById('alarmModal');
+document.getElementById('alarmText').textContent = `Alarm: ${time}`;
+modal.classList.add('active');
+
+alarmSound = initAlarmSound();
+alarmSound.oscillator.start();
+
+let high = true;
+const beepInterval = setInterval(() => {
+if (alarmSound) {
+alarmSound.oscillator.frequency.value = high ? 800 : 600;
+high = !high;
+} else {
+clearInterval(beepInterval);
+}
+}, 500);
+
+window.beepInterval = beepInterval;
+}
+
+function stopAlarm() {
+const modal = document.getElementById('alarmModal');
+modal.classList.remove('active');
+
+if (alarmSound) {
+alarmSound.oscillator.stop();
+alarmSound.audioContext.close();
+alarmSound = null;
+}
+
+if (window.beepInterval) {
+clearInterval(window.beepInterval);
+}
+}
+
+createClockMarkers();
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+</body>
+</html>
